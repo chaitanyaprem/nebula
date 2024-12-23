@@ -323,7 +323,10 @@ func CrawlAction(c *cli.Context) error {
 		return nil
 
 	case string(config.NetworkEthCons),
-		string(config.NetworkHolesky): // use a different driver etc. for the Ethereum consensus layer + Holeksy Testnet
+		string(config.NetworkHolesky),
+		string(config.NetworkWakuStatus),
+		string(config.NetworkWakuTWN):
+		// use a different driver etc. for the Ethereum consensus layer + Holeksy Testnet + Waku networks
 
 		bpEnodes, err := cfg.BootstrapEnodesV5()
 		if err != nil {
@@ -359,7 +362,10 @@ func CrawlAction(c *cli.Context) error {
 			UDPBufferSize:  cfg.Root.UDPBufferSize,
 			UDPRespTimeout: cfg.UDPRespTimeout,
 		}
-
+		// set discv5 protocolID for Waku networks
+		if cfg.Network == string(config.NetworkWakuStatus) || cfg.Network == string(config.NetworkWakuTWN) {
+			driverCfg.Discv5ProtocolID = [6]byte{'d', '5', 'w', 'a', 'k', 'u'}
+		}
 		// init the crawl driver
 		driver, err := discv5.NewCrawlDriver(dbc, dbCrawl, driverCfg)
 		if err != nil {

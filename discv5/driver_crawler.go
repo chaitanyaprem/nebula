@@ -142,18 +142,19 @@ func (p PeerInfo) DeduplicationKey() string {
 }
 
 type CrawlDriverConfig struct {
-	Version        string
-	TrackNeighbors bool
-	DialTimeout    time.Duration
-	BootstrapPeers []*enode.Node
-	AddrDialType   config.AddrType
-	AddrTrackType  config.AddrType
-	KeepENR        bool
-	MeterProvider  metric.MeterProvider
-	TracerProvider trace.TracerProvider
-	LogErrors      bool
-	UDPBufferSize  int
-	UDPRespTimeout time.Duration
+	Version          string
+	TrackNeighbors   bool
+	DialTimeout      time.Duration
+	BootstrapPeers   []*enode.Node
+	AddrDialType     config.AddrType
+	AddrTrackType    config.AddrType
+	KeepENR          bool
+	MeterProvider    metric.MeterProvider
+	TracerProvider   trace.TracerProvider
+	LogErrors        bool
+	UDPBufferSize    int
+	UDPRespTimeout   time.Duration
+	Discv5ProtocolID [6]byte
 }
 
 func (cfg *CrawlDriverConfig) CrawlerConfig() *CrawlerConfig {
@@ -264,10 +265,10 @@ func (d *CrawlDriver) NewWorker() (core.Worker[PeerInfo, core.CrawlResult[PeerIn
 	})
 
 	ethNode := enode.NewLocalNode(d.peerstore, priv)
-
 	cfg := discover.Config{
 		PrivateKey:   priv,
 		ValidSchemes: enode.ValidSchemes,
+		V5ProtocolID: &d.cfg.Discv5ProtocolID,
 	}
 	listener, err := discover.ListenV5(conn, ethNode, cfg)
 	if err != nil {
