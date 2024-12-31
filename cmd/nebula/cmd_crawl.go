@@ -361,10 +361,15 @@ func CrawlAction(c *cli.Context) error {
 			LogErrors:      cfg.Root.LogErrors,
 			UDPBufferSize:  cfg.Root.UDPBufferSize,
 			UDPRespTimeout: cfg.UDPRespTimeout,
+			Network:        config.Network(cfg.Network),
 		}
-		// set discv5 protocolID for Waku networks
+		// set Waku network specific config
 		if cfg.Network == string(config.NetworkWakuStatus) || cfg.Network == string(config.NetworkWakuTWN) {
 			driverCfg.Discv5ProtocolID = [6]byte{'d', '5', 'w', 'a', 'k', 'u'}
+			driverCfg.Clusterconfig = config.WakuTWNClusterConfig
+			if cfg.Network == string(config.NetworkWakuStatus) {
+				driverCfg.Clusterconfig = config.WakuStatusClusterConfig
+			}
 		}
 		// init the crawl driver
 		driver, err := discv5.NewCrawlDriver(dbc, dbCrawl, driverCfg)
@@ -399,9 +404,7 @@ func CrawlAction(c *cli.Context) error {
 			return err
 		}
 
-		for _, addrInfo := range addrInfos {
-			bpAddrInfos = append(bpAddrInfos, addrInfo)
-		}
+		bpAddrInfos = append(bpAddrInfos, addrInfos...)
 
 		// configure the crawl driver
 		driverCfg := &libp2p.CrawlDriverConfig{

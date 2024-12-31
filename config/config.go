@@ -246,6 +246,11 @@ func (c *Database) DatabaseSourceName() string {
 	)
 }
 
+type WakuClusterConfig struct {
+	WakuClusterID uint32
+	WakuShards    []uint32
+}
+
 // Crawl contains general user configuration.
 type Crawl struct {
 	Root *Root
