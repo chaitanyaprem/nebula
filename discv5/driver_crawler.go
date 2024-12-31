@@ -30,10 +30,8 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/muxer/yamux"
 	"github.com/libp2p/go-libp2p/p2p/security/noise"
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
-	"github.com/libp2p/go-msgio/pbio"
 	ma "github.com/multiformats/go-multiaddr"
 	log "github.com/sirupsen/logrus"
-	"github.com/waku-org/go-waku/waku/v2/protocol/metadata/pb"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 
@@ -393,36 +391,6 @@ func newLibp2pHost(cfg *CrawlDriverConfig) (host.Host, error) {
 		h.SetStreamHandler("/eth2/beacon_chain/req/goodbye/1/ssz_snappy", func(s network.Stream) { io.ReadAll(s) })
 	}
 	h.SetStreamHandler("/meshsub/1.1.0", func(s network.Stream) { io.ReadAll(s) }) // https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md#the-gossip-domain-gossipsub
-	if cfg.Network == config.NetworkWakuStatus || cfg.Network == config.NetworkWakuTWN {
-
-		h.SetStreamHandler("/vac/waku/metadata/1.0.0", func(stream network.Stream) {
-			request := &pb.WakuMetadataRequest{}
-			writer := pbio.NewDelimitedWriter(stream)
-			reader := pbio.NewDelimitedReader(stream, math.MaxInt32)
-			err := reader.ReadMsg(request)
-			if err != nil {
-				fmt.Println("reading request from peer", stream.Conn().RemotePeer(), err)
-				if err := stream.Reset(); err != nil {
-					fmt.Println("resetting connection", err)
-				}
-				return
-			}
-			//fmt.Println("received metadata request from peer ", stream.Conn().RemotePeer(), request)
-			response := new(pb.WakuMetadataResponse)
-			response.ClusterId = &cfg.Clusterconfig.WakuClusterID
-			response.Shards = cfg.Clusterconfig.WakuShards
-			err = writer.WriteMsg(response)
-			if err != nil {
-				fmt.Println("writing response to peer", stream.Conn().RemotePeer(), err)
-				if err := stream.Reset(); err != nil {
-					fmt.Println("resetting connection", err)
-				}
-				return
-			}
-			//fmt.Println("sent metadata response to peer", stream.Conn().RemotePeer(), response)
-
-		})
-	}
 	log.WithField("peerID", h.ID().String()).Infoln("Started libp2p host")
 
 	return h, nil
